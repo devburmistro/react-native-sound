@@ -122,7 +122,7 @@ public class RNSoundModule extends ReactContextBaseJavaModule {
     player.addListener(new ExoPlayer.EventListener() {
       @Override
       public void onTimelineChanged(Timeline timeline, Object manifest) {
-        callback.invoke(true);
+        //callback.invoke(true);
       }
 
       @Override
