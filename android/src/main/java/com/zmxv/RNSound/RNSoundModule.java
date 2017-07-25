@@ -106,38 +106,68 @@ public class RNSoundModule extends ReactContextBaseJavaModule {
         callback.invoke(e);
         return;
     }
+
+    final SimpleExoPlayer finalPlayer = player;
+    player.addListener(new ExoPlayer.EventListener() {
+      boolean hasfired = false;
+      @Override
+      public void onTimelineChanged(Timeline timeline, Object manifest) {}
+
+      @Override
+      public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
+
+      @Override
+      public void onLoadingChanged(boolean isLoading) {
+        System.out.println("NATIVE loading finished " + isLoading + " duration is " + finalPlayer.getDuration());
+        if (hasfired) { return; }
+        if (isLoading == false) {
+          WritableMap props = Arguments.createMap();
+          props.putDouble("duration", finalPlayer.getDuration() * .001);
+          callback.invoke(NULL, props);
+          hasfired = true;
+        }
+      }
+
+      @Override
+      public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {}
+
+      @Override
+      public void onPlayerError(ExoPlaybackException error) {}
+
+      @Override
+      public void onPositionDiscontinuity() {}
+    });
+
     this.playerPool.put(key, player);
-    WritableMap props = Arguments.createMap();
-    props.putDouble("duration", player.getDuration() * .001);
-    callback.invoke(NULL, props);
+
+//    WritableMap props = Arguments.createMap();
+//    props.putDouble("duration", player.getDuration() * .001);
+//    callback.invoke(NULL, props);
   }
 
   @ReactMethod
   public void play(final Integer key, final Callback callback) {
-    SimpleExoPlayer player = this.playerPool.get(key);
+    final SimpleExoPlayer player = this.playerPool.get(key);
     if (player == null) {
       callback.invoke(false);
       return;
     }
     player.addListener(new ExoPlayer.EventListener() {
       @Override
-      public void onTimelineChanged(Timeline timeline, Object manifest) {
-        //callback.invoke(true);
-      }
+      public void onTimelineChanged(Timeline timeline, Object manifest) {}
 
       @Override
-      public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-      }
+      public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {}
 
       @Override
-      public void onLoadingChanged(boolean isLoading) {
-
-      }
+      public void onLoadingChanged(boolean isLoading) {}
 
       @Override
       public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
+        System.out.println("NATIVE player state changed:" + playbackState );
+        if (playbackState ==  ExoPlayer.STATE_ENDED) {
+          callback.invoke(true);
+        }
       }
 
       @Override
@@ -226,3 +256,4 @@ public class RNSoundModule extends ReactContextBaseJavaModule {
     return constants;
   }
 }
+
